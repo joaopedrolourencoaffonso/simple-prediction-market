@@ -8,10 +8,14 @@ contract MercadoSimples {
     uint256 internal numeroDePrevisoes;
     mapping(uint256 => Previsao) internal mappingPrevisoes;
     mapping(address => bool) internal mappingJuizes;
+    //lista todos os juizes
+    address[] internal listaDeJuizes;
     // Mapea id da votacao para votos e valores dos votos
     mapping(uint256 => mapping(address => int256)) internal mappingVotos;
     // evento da criacao de nova votacao
     event NovaPrevisaoEvent(uint256 indexed, string titulo, string conteudo);
+    // evento da criacao de nova votacao
+    event PrevisaoEncerradaEvent(uint256 indexed, string resultado);
     // Evento com o voto e o votante
     event NovoVoto(uint256 idDaVotacao, address votante, int256 voto);
     // Declare a variable for the ERC-20 token interface
@@ -32,6 +36,7 @@ contract MercadoSimples {
     // primeiro juiz a ser inserido
     constructor(address primeiroJuiz, address tokenAddress) {
         mappingJuizes[primeiroJuiz] = true;
+        listaDeJuizes.push(primeiroJuiz);
         numeroDePrevisoes = 0;
         token = IERC20(tokenAddress);
     }
@@ -56,6 +61,11 @@ contract MercadoSimples {
         require(mappingJuizes[msg.sender], "Endereco nao cadastrado como juiz");
 
         mappingJuizes[novoJuiz] = true;
+        listaDeJuizes.push(novoJuiz);
+    }
+    
+    function getJuizes() public view returns (address[] memory) {
+        return listaDeJuizes;
     }
 
     function addPrevisao(string calldata _titulo, string calldata _texto) external {
@@ -115,18 +125,20 @@ contract MercadoSimples {
         emit NovoVoto(idDaPrevisao, msg.sender, valorDoVoto);
 
         // Transfer the tokens from msg.sender to the contract
-        require(token.transferFrom(msg.sender, address(this), abs(valorDoVoto)), "Token transfer failed");
+        require(token.transferFrom(msg.sender, address(this), abs(valorDoVoto)), "Transferencia de tokens falhou");
     }
 
     function getVotantes(uint256 idDaPrevisao) external view returns (address[] memory) {
         // Verifica se votacao existe
-        require(idDaPrevisao <= numeroDePrevisoes,"O eleitor nao votou nessa pesquisa");
+        require(idDaPrevisao <= numeroDePrevisoes,"Previsao nao existe");
         return (
             mappingPrevisoes[idDaPrevisao].votantes
         );
     }
 
     function getVoto(uint256 idDaPrevisao, address votante) external view returns (int256 voto) {
+        // Verifica se votacao existe
+        require(idDaPrevisao <= numeroDePrevisoes,"Previsao nao existe");
         // verifica se ja votou
         require(mappingVotos[idDaPrevisao][votante] != 0,"O eleitor nao votou nessa pesquisa");
         return (
@@ -134,23 +146,25 @@ contract MercadoSimples {
         );
     }
 
-    function fechaVotacao(uint256 idDaPrevisao) external {
+    function encerraPrevisao(uint256 idDaPrevisao, string memory resultado) external {
         require(mappingJuizes[msg.sender],"Somente juizes podem encerrar votacoes");
         mappingPrevisoes[idDaPrevisao].status = false;
+        emit PrevisaoEncerradaEvent(idDaPrevisao, resultado);
     }
 
-    function pagaVotantes(uint256 amount, address recipient) external {
-        require(mappingJuizes[msg.sender],"Somente juizes podem encerrar votacoes");
-        
-        // Ensure the amount is greater than zero
-        require(amount > 0, "Amount must be greater than zero");
+    function pagaVotantes(uint256 idDaPrevisao, uint256 amount, address recipient) external {
+        require(idDaPrevisao <= numeroDePrevisoes,"Previsao nao existe");
+        require(!mappingPrevisoes[idDaPrevisao].status,"Votacao tem que estar encerrada");
+        require(mappingJuizes[msg.sender],"Somente juizes podem realizar pagamentos");
+        require(mappingVotos[idDaPrevisao][recipient] != 0,"O recipiente nao votou nessa pesquisa");
+        require(amount > 0, "Quantia deve ser maior que zero");
 
         // Ensure the contract has enough tokens to perform the transfer
         uint256 contractBalance = token.balanceOf(address(this));
-        require(contractBalance >= amount, "Insufficient contract balance");
+        require(contractBalance >= amount, "Saldo do contrato insuficiente para transferencia");
 
         // Perform the token transfer from the contract to the recipient
-        require(token.transfer(recipient, amount), "Token transfer failed");
+        require(token.transfer(recipient, amount), "Transferencia de token falhou");
     }
 
 }
