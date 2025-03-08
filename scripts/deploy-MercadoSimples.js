@@ -30,9 +30,9 @@ async function main() {
   }
 
   // Cadastrando previsões
-  await mercado.addPrevisao("Previsao 1", "Descrição previsão 1");
-  await mercado.addPrevisao("Previsao 2", "Descrição previsão 2");
-  await mercado.addPrevisao("Previsao 3", "Descrição previsão 3");
+  await mercado.addPrevisao("O Nepal vai vencer o Oscar essa ano?", "A sequência de '7 anos no Tibet': '8 anos em Katmandu' se mostrou um dos favoritos das platéias esse ano. Acham que ele será o ganhador do Oscar?");
+  await mercado.addPrevisao("O Ponte Preta vai vencer a séria A?", "Eles derrotaram o Vasco por 11x0, eles têm uma chance realista de vencer?");
+  await mercado.addPrevisao("Kanye West será o próximo presidente dos EUA?", "Pesquisas mostram que a popularidade dele saiu de -2% para -1%, ele têm chance em 2028?");
 
   // lançando votos
   let temp;
