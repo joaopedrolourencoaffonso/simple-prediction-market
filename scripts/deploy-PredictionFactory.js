@@ -1,84 +1,93 @@
-// scripts/deploy-banner.js
 const { ethers } = require("hardhat");
 
-async function getRandomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 async function main() {
-  //criando listas de usuários
-  const lista_de_eleitores = await ethers.getSigners();
-  const nove_eleitores = lista_de_eleitores.slice(0,8);
-  const dez_eleitores = lista_de_eleitores.slice(9,18);
+  // Deploy the PredictionFactory contract
+  const [owner, user1, user2, user3, user4, user5] = await ethers.getSigners();
+  console.log("Deploying contracts with the account:", owner.address);
+
   // deploy do contrato de tokens
-  console.log("deploy do contrato de tokens");
+  console.log("--- deploy do contrato de tokens ---");
   const Token = await ethers.getContractFactory("MyToken");
   const token = await Token.deploy("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
   await token.waitForDeployment();
   const tokenAddress = await token.getAddress();
   console.log("address MyToken: ", tokenAddress);
-  
-  // deploy do contrato de Mercado Simples
-  console.log("--- deploy do contrato de Mercado Simples ---");
+
   const PredictionFactory = await ethers.getContractFactory("PredictionFactory");
-  const fabricaDePredicoes = await PredictionFactory.deploy("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
-  await fabricaDePredicoes.waitForDeployment();
-  const fabricaAddress = await fabricaDePredicoes.getAddress();
-  console.log("Fábrica de predições: ", fabricaAddress);
+  const factory = await PredictionFactory.deploy(owner.address);
+  await factory.waitForDeployment();
+  const factoryAddress = await factory.getAddress();
+  console.log("PredictionFactory deployed to:", factoryAddress);
 
-  //mintando tokens para os endereços
-  for (let i = 0; i <= 19; i++) {
-    await token.mint(lista_de_eleitores[i],10000);
+  console.log("--- Deploy 3 PredictionContracts ---");
+  //const tokenAddress = "0xYourTokenAddressHere"; // Replace with an actual token address
+  const predictionContracts = [];
+  let predictionContractAddress;
+  for (let i = 0; i < 3; i++) {
+    const titulo = `Prediction ${i + 1}`;
+    const texto = `This is the prediction text for Prediction contract ${i + 1}`;
+    await factory.deployPredictionContract(
+      owner.address,  // _primeiroJuiz
+      tokenAddress,   // _tokenAddress
+      titulo,         // _titulo
+      texto           // _texto
+    );
+    predictionContractAddress = await factory.getContractInfo(i + 1);
+    predictionContracts.push(predictionContractAddress[2]);
+    console.log(`PredictionContract ${i + 1} deployed at: ${predictionContractAddress[2]}`);
   }
 
-  // Cadastrando previsões
-  console.log("--- cadastrando previsões ---");
-  await fabricaDePredicoes.deployPredictionContract("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", fabricaAddress,"O Nepal vai vencer o Oscar essa ano?", "A sequência de '7 anos no Tibet': '8 anos em Katmandu' se mostrou um dos favoritos das platéias esse ano. Acham que ele será o ganhador do Oscar?");
-  await fabricaDePredicoes.deployPredictionContract("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", fabricaAddress,"O Ponte Preta vai vencer a séria A?", "Eles derrotaram o Vasco por 11x0, eles têm uma chance realista de vencer?");
-  await fabricaDePredicoes.deployPredictionContract("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", fabricaAddress,"Kanye West será o próximo presidente dos EUA?", "Pesquisas mostram que a popularidade dele saiu de -2% para -1%, ele têm chance em 2028?");
-  
-  let previsoes = [];
-  let previsao;
+  console.log("--- mintando os tokens para os usuários ---");
+  await token.mint(owner,10000);
+  await token.mint(user1,10000);
+  await token.mint(user2,10000);
+  await token.mint(user3,10000);
+  await token.mint(user4,10000);
+  await token.mint(user5,10000);
 
-  previsao = await fabricaDePredicoes.getEndereco(1);
-  previsoes.push(previsao);
-  previsao = await fabricaDePredicoes.getEndereco(2);
-  previsoes.push(previsao);
-  previsao = await fabricaDePredicoes.getEndereco(3);
-  previsoes.push(previsao);
-  console.log("Endereços das previsões: ", previsoes);
+  console.log("--- Registrando votos ---");
+  for (const contractAddress of predictionContracts) {
+    console.log(" Registrando votos na predição: ", contractAddress);
+    const predictionContract = await ethers.getContractAt("PredictionContract", contractAddress);
 
-  // cadastrando votos
-  console.log("--- cadastrando votos ---");
-  let contratoDePrevisao;
-  let approveTx;
-  for (let id = 1; id <= 3; id++){
-    console.log("Cadastrando votos para previsao ", id, previsoes[id-1][2]);
+    const voteValue = 100;
+    const voteOption = true;
 
-    // You can get the ABI from the compiled contract artifacts
-    const contractArtifact = await hre.artifacts.readArtifact("PredictionContract"); // or import it directly
-    const contractABI = contractArtifact.abi; // ABI of the contract
+    // Approve the vote amount for the contract
+    const token = await ethers.getContractAt("IERC20", tokenAddress);
+    await token.connect(user1).approve(contractAddress, voteValue);
+    console.log("AQUI!");
+      
+    // Cast vote from each user
+    await predictionContract.connect(user1).votar(voteValue, voteOption);
+    console.log(`User ${user1.address} voted in PredictionContract ${contractAddress}`);
 
-    // Connect to the contract using ethers.getContractAt
-    const contratoDePrevisao = await ethers.getContractAt(contractABI, previsoes[id-1][2]);
+    // Add more users to vote
+    await token.connect(user2).approve(contractAddress, voteValue);
+    await predictionContract.connect(user2).votar(voteValue, !voteOption);
+    console.log(`User ${user2.address} voted in PredictionContract ${contractAddress}`);
 
-    // Now you can call functions on the contract
-    const status = await contratoDePrevisao.getStatus();
-    console.log("Contract status:", status);
+    await token.connect(user3).approve(contractAddress, voteValue);
+    await predictionContract.connect(user3).votar(voteValue, voteOption);
+    console.log(`User ${user3.address} voted in PredictionContract ${contractAddress}`);
 
-    temp = await getRandomBetween(1,10);
-    temp = 100*temp;
-    approveTx = await token.connect(lista_de_eleitores[1]).approve(previsoes[0][2],temp);
-    await approveTx.wait();
+    await token.connect(user4).approve(contractAddress, voteValue);
+    await predictionContract.connect(user4).votar(voteValue, !voteOption);
+    console.log(`User ${user4.address} voted in PredictionContract ${contractAddress}`);
 
-    let allowanceAmount = await token.allowance(lista_de_eleitores[1].address, previsoes[0][2]);
-    console.log(allowanceAmount);
-    await contratoDePrevisao.connect(lista_de_eleitores[1]).votar(temp,true);
-    //console.log("Eleitor ", 1, " votou ", temp, " na predição", 1);
+    await token.connect(user5).approve(contractAddress, voteValue);
+    await predictionContract.connect(user5).votar(voteValue, voteOption);
+    console.log(`User ${user5.address} voted in PredictionContract ${contractAddress}`);
+    //const voteValue = ethers.utils.parseUnits("1", 18); // Voting with 1 token
+    //const voteOption = i % 2 === 0; // Alternating between true (yes) and false (no)
   }
+
+  console.log("Deployment and voting completed!");
 }
 
-main().then(() => process.exit(0)).catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

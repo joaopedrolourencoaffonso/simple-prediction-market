@@ -45,7 +45,7 @@ contract PredictionFactory {
         return endereco;
     }
 
-    function getEndereco(uint256 idDaPrevisao) public view returns (string memory titulo, string memory texto, address) {
+    function getContractInfo(uint256 idDaPrevisao) public view returns (string memory titulo, string memory texto, address) {
         return (
             mappingPrevisoes[idDaPrevisao].titulo,
             mappingPrevisoes[idDaPrevisao].texto,

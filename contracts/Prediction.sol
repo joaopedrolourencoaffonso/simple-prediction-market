@@ -72,9 +72,7 @@ contract PredictionContract {
         require(mappingVotos[msg.sender] == 0,"O eleitor ja votou nessa previsao");
         require(valorDoVoto > 0,"Voto nao pode ser zero");
         // Check if the user has approved enough tokens
-        console.log("--> 1");
         uint256 allowanceAmount = token.allowance(msg.sender, address(this));
-        console.log("--> ", allowanceAmount);
         require(allowanceAmount >= valorDoVoto, "Precisa aprovar a transferencia antes de chamar a funcao");
         
         // Contabilizando total de votos
