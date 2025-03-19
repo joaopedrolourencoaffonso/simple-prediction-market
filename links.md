@@ -6,3 +6,6 @@
 - [The Future of Futarchy](https://torontopm.wordpress.com/2010/01/04/the-future-of-futarchy/)
 - [Liquid democracy](https://en.wikipedia.org/wiki/Liquid_democracy)
 - [Holacracy](https://en.wikipedia.org/wiki/Holacracy)
+- [Bolsa de Previsões](https://www.bolsadeprevisoes.com.br/home) experimento executado entre 07/set/14 a 06/nov/14.
+- [Polkamarkets Web: interface de usuário para a interação com mercados preditivos descentralizados](https://ud10.arapiraca.ufal.br/repositorio/publicacoes/4601) TCC voltado para mercados preditivos.
+- [A APLICAÇÃO DOS MERCADOS DE PREVISÃO NO SECTOR ENERGÉTICO – O CASO DE ESTUDO DA EDP](https://run.unl.pt/bitstream/10362/2576/1/Silveira_2009.pdf), Dissertação.
