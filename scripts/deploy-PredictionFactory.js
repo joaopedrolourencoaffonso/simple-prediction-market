@@ -1,5 +1,12 @@
 const { ethers } = require("hardhat");
 
+function getRandomValues() {
+  const randomInt = 100*(Math.floor(Math.random() * 10) + 1);  // Random integer between 1 and 10
+  const randomBool = Math.random() < 0.5;  // Random boolean (true or false)
+  
+  return { randomInt, randomBool };
+}
+
 async function main() {
   // Deploy the PredictionFactory contract
   const [owner, user1, user2, user3, user4, user5] = await ethers.getSigners();
@@ -46,18 +53,19 @@ async function main() {
   await token.mint(user5,10000);
 
   console.log("--- Registrando votos ---");
+  let voteValue;
+  let voteOption
   for (const contractAddress of predictionContracts) {
     console.log(" Registrando votos na predição: ", contractAddress);
     const predictionContract = await ethers.getContractAt("PredictionContract", contractAddress);
 
-    const voteValue = 100;
-    const voteOption = true;
+    temp = getRandomValues();
+    console.log("--> ", temp);
 
-    // Approve the vote amount for the contract
+    // Pegando contrato do token
     const token = await ethers.getContractAt("IERC20", tokenAddress);
-    await token.connect(user1).approve(contractAddress, voteValue);
-    console.log("AQUI!");
-      
+    
+    await token.connect(user1).approve(contractAddress, voteValue);  
     // Cast vote from each user
     await predictionContract.connect(user1).votar(voteValue, voteOption);
     console.log(`User ${user1.address} voted in PredictionContract ${contractAddress}`);
