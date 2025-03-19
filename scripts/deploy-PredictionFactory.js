@@ -54,38 +54,42 @@ async function main() {
 
   console.log("--- Registrando votos ---");
   let voteValue;
-  let voteOption
+  let voteOption;
+  let valores;
   for (const contractAddress of predictionContracts) {
     console.log(" Registrando votos na predição: ", contractAddress);
     const predictionContract = await ethers.getContractAt("PredictionContract", contractAddress);
-
-    temp = getRandomValues();
-    console.log("--> ", temp);
+    //console.log("--> ", temp.randomInt, temp.randomBool);
 
     // Pegando contrato do token
     const token = await ethers.getContractAt("IERC20", tokenAddress);
     
-    await token.connect(user1).approve(contractAddress, voteValue);  
+    valores = getRandomValues();
+    await token.connect(user1).approve(contractAddress, valores.randomInt);  
     // Cast vote from each user
-    await predictionContract.connect(user1).votar(voteValue, voteOption);
-    console.log(`User ${user1.address} voted in PredictionContract ${contractAddress}`);
+    await predictionContract.connect(user1).votar(valores.randomInt, valores.randomBool);
+    console.log(`User ${user1.address} voted ${valores.randomInt}, ${valores.randomBool} in PredictionContract ${contractAddress}`);
 
     // Add more users to vote
-    await token.connect(user2).approve(contractAddress, voteValue);
-    await predictionContract.connect(user2).votar(voteValue, !voteOption);
-    console.log(`User ${user2.address} voted in PredictionContract ${contractAddress}`);
+    valores = getRandomValues();
+    await token.connect(user2).approve(contractAddress, valores.randomInt);
+    await predictionContract.connect(user2).votar(valores.randomInt, valores.randomBool);
+    console.log(`User ${user2.address} voted ${valores.randomInt}, ${valores.randomBool} in PredictionContract ${contractAddress}`);
 
-    await token.connect(user3).approve(contractAddress, voteValue);
-    await predictionContract.connect(user3).votar(voteValue, voteOption);
-    console.log(`User ${user3.address} voted in PredictionContract ${contractAddress}`);
+    valores = getRandomValues();
+    await token.connect(user3).approve(contractAddress, valores.randomInt);
+    await predictionContract.connect(user3).votar(valores.randomInt, valores.randomBool);
+    console.log(`User ${user3.address} voted ${valores.randomInt}, ${valores.randomBool} in PredictionContract ${contractAddress}`);
 
-    await token.connect(user4).approve(contractAddress, voteValue);
-    await predictionContract.connect(user4).votar(voteValue, !voteOption);
-    console.log(`User ${user4.address} voted in PredictionContract ${contractAddress}`);
+    valores = getRandomValues();
+    await token.connect(user4).approve(contractAddress, valores.randomInt);
+    await predictionContract.connect(user4).votar(valores.randomInt, valores.randomBool);
+    console.log(`User ${user4.address} voted ${valores.randomInt}, ${valores.randomBool} in PredictionContract ${contractAddress}`);
 
-    await token.connect(user5).approve(contractAddress, voteValue);
-    await predictionContract.connect(user5).votar(voteValue, voteOption);
-    console.log(`User ${user5.address} voted in PredictionContract ${contractAddress}`);
+    valores = getRandomValues();
+    await token.connect(user5).approve(contractAddress, valores.randomInt);
+    await predictionContract.connect(user5).votar(valores.randomInt, valores.randomBool);
+    console.log(`User ${user5.address} voted ${valores.randomInt}, ${valores.randomBool} in PredictionContract ${contractAddress}`);
     //const voteValue = ethers.utils.parseUnits("1", 18); // Voting with 1 token
     //const voteOption = i % 2 === 0; // Alternating between true (yes) and false (no)
   }
